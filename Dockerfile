@@ -1,7 +1,7 @@
 FROM debian:stretch
 
 ENV FLUTTER_VERSION="v1.15.17"
-ENV ANDROID_VERSION="28"
+ENV ANDROID_VERSION="29"
 
 # image mostly inspired from https://github.com/GoogleCloudPlatform/cloud-builders-community/blob/770e0e9/flutter/Dockerfile
 # and https://gitlab.com/gableroux/gitlab_ci_flutter_example/.
@@ -26,14 +26,14 @@ RUN apt install -y \
 
 # Install the Android SDK Dependency.
 ENV ANDROID_SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip"
-ENV ANDROID_TOOLS_ROOT="/opt/android_sdk"
+ENV ANDROID_TOOLS_ROOT="/opt/android-sdk-linux"
 RUN mkdir -p "${ANDROID_TOOLS_ROOT}"
 ENV ANDROID_SDK_ARCHIVE="${ANDROID_TOOLS_ROOT}/archive"
 RUN wget -q "${ANDROID_SDK_URL}" -O "${ANDROID_SDK_ARCHIVE}"
 RUN unzip -q -d "${ANDROID_TOOLS_ROOT}" "${ANDROID_SDK_ARCHIVE}"
-RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT} build-tools;$ANDROID_VERSION.0.0"
-RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT} platforms;android-$ANDROID_VERSION"
-RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT} platform-tools"
+RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT}" "build-tools;$ANDROID_VERSION.0.0"
+RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT}" "platforms;android-$ANDROID_VERSION"
+RUN yes "y" | "${ANDROID_TOOLS_ROOT}/tools/bin/sdkmanager" "--sdk_root=${ANDROID_TOOLS_ROOT}" "platform-tools"
 RUN rm "${ANDROID_SDK_ARCHIVE}"
 ENV PATH="${ANDROID_TOOLS_ROOT}/tools:${PATH}"
 ENV PATH="${ANDROID_TOOLS_ROOT}/tools/bin:${PATH}"
@@ -56,7 +56,9 @@ RUN flutter doctor -v
 
 ENV PATH $PATH:/flutter/bin/cache/dart-sdk/bin:/flutter/bin
 
-CMD ['ansible']
+# Perform an artifact precache so that no extra assets need to be downloaded on demand.
+RUN flutter precache
+
 
 
 # Install lcov-to-cobertura-xml
@@ -71,9 +73,9 @@ RUN adduser --disabled-password --gecos "" flutter
 RUN chown flutter:flutter -R ${ANDROID_TOOLS_ROOT}
 RUN chown flutter:flutter -R ${FLUTTER_ROOT}
 
+# cp precache from above to flutter user
+RUN cp -r /root/.pub-cache/ /home/flutter/.pub-cache/
+
 # Change user and workspace
 USER flutter
 WORKDIR /home/flutter/
-
-# Perform an artifact precache so that no extra assets need to be downloaded on demand.
-RUN flutter precache
