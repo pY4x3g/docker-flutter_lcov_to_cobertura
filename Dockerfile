@@ -1,6 +1,6 @@
 FROM debian:stretch
 
-ENV FLUTTER_VERSION="v1.15.17"
+ENV FLUTTER_VERSION="v1.15.20"
 ENV ANDROID_VERSION="29"
 
 # image mostly inspired from https://github.com/GoogleCloudPlatform/cloud-builders-community/blob/770e0e9/flutter/Dockerfile
@@ -22,7 +22,8 @@ RUN apt install -y \
   lcov \
   lib32stdc++6 \
   libglu1-mesa \
-  default-jdk-headless
+  default-jdk-headless \
+  libsqlite3-dev
 
 # Install the Android SDK Dependency.
 ENV ANDROID_SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-6200805_latest.zip"
